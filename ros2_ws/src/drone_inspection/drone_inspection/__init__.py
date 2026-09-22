@@ -1,0 +1,2 @@
+"""Autonomous agricultural inspection subsystem."""
+
