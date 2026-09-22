@@ -1,0 +1,5 @@
+# Simulation fault injection only; unavailable when battery.source is px4.
+float32 percentage
+---
+bool accepted
+string message
