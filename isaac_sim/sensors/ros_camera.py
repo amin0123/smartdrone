@@ -19,7 +19,7 @@ class RosCamera:
         if not rclpy.ok():
             rclpy.init()
         self.node = rclpy.create_node('isaac_sensor_bridge')
-        qos = QoSProfile(depth=2, reliability=ReliabilityPolicy.BEST_EFFORT)
+        qos = QoSProfile(depth=2, reliability=ReliabilityPolicy.RELIABLE)
         self.clock_pub = self.node.create_publisher(Clock, '/clock', 10)
         self.rgb_pub = self.node.create_publisher(Image, '/drone/camera/image_raw', qos)
         self.depth_pub = self.node.create_publisher(Image, '/drone/camera/depth', qos)

@@ -51,7 +51,7 @@ class PerceptionNode(Node):
             return
         blobs = self.detector.detect(frame.rgb)
         output = DetectionArray()
-        output.header = frame.message.header
+        output.header.stamp, output.header.frame_id = frame.message.header.stamp, 'map'
         for blob in blobs:
             position = ground_intersection(blob.center, frame.intrinsics, frame.pose,
                                            self.plane_z, self.camera.translation)

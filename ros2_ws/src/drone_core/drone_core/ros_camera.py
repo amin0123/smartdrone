@@ -1,8 +1,10 @@
 """ROS camera input with explicit encoding, stride and image-time pose checks."""
 from dataclasses import dataclass
+import time
 import cv2
 import numpy as np
 from sensor_msgs.msg import Image, CameraInfo
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 from drone_interfaces.msg import VehicleState
 from .camera import PoseBuffer, TimedPose
 from .ros_support import SENSOR_QOS, parameter
@@ -43,10 +45,13 @@ class CameraInput:
         self.poses, self.info = PoseBuffer(), None
         self.reset_counter = None
         self.last_stamp = float('-inf')
+        self.accepted_at = time.monotonic()
         self.pose_tolerance = parameter(node, 'perception.pose_tolerance', .2)
         self.translation = tuple(parameter(node, 'perception.camera_translation', [0., 0., -.04]))
+        reliable = parameter(node, 'perception.reliable_images', True)
+        image_qos = QoSProfile(depth=2, reliability=ReliabilityPolicy.RELIABLE if reliable else ReliabilityPolicy.BEST_EFFORT)
         self.image_sub = node.create_subscription(Image, parameter(node, 'perception.image_topic',
-            '/drone/camera/image_raw'), self._image, SENSOR_QOS)
+            '/drone/camera/image_raw'), self._image, image_qos)
         self.info_sub = node.create_subscription(CameraInfo, parameter(node, 'perception.camera_info_topic',
             '/drone/camera/camera_info'), self._info, SENSOR_QOS)
         self.pose_sub = node.create_subscription(VehicleState, '/drone/state', self._state, SENSOR_QOS)
@@ -68,12 +73,16 @@ class CameraInput:
         stamp = seconds(msg.header.stamp)
         age = self.node.get_clock().now().nanoseconds * 1e-9 - stamp
         if not -.1 <= age <= .5 or stamp <= self.last_stamp:
+            self._reject(f'time: image_age={age:.3f}s stamp={stamp:.3f} previous={self.last_stamp:.3f}')
             return
         if self.info is None or (msg.width, msg.height, msg.header.frame_id) != (
                 self.info.width, self.info.height, self.info.header.frame_id):
+            self._reject('calibration/frame identity unavailable')
             return
         pose = self.poses.at(stamp, self.pose_tolerance)
         if pose is None:
+            nearest = min((abs(p.stamp-stamp) for p in self.poses.samples), default=float('inf'))
+            self._reject(f'no image-time pose: nearest={nearest:.3f}s')
             return
         try:
             rgb = image_to_rgb(msg)
@@ -81,9 +90,14 @@ class CameraInput:
             self.node.get_logger().error(str(exc), throttle_duration_sec=5.)
             return
         self.last_stamp = stamp
+        self.accepted_at = time.monotonic()
         k = np.asarray(self.info.k).reshape(3, 3)
         d = np.asarray(self.info.d)
         if d.size and np.any(d):
             # Downstream pixel geometry uses the same rectified K.
             rgb = cv2.undistort(rgb, k, d)
         self.callback(CameraFrame(msg, rgb, pose, k, np.zeros(5)))
+
+    def _reject(self, reason):
+        if time.monotonic()-self.accepted_at > 2.:
+            self.node.get_logger().warning('Camera input rejected: '+reason, throttle_duration_sec=5.)
