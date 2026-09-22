@@ -1,0 +1,73 @@
+/**:
+  ros__parameters:
+    use_sim_time: true
+    inspection:
+      origin_x: 4.0
+      origin_y: -3.0
+      length: 8.0
+      width: 6.0
+      row_spacing: 3.0
+      altitude: 3.0
+      velocity: 1.0
+    navigation:
+      max_velocity: 2.0
+      waypoint_tolerance: 0.35
+      max_lead: 1.0
+      vehicle_radius: 0.4
+    fence:
+      minimum: [-5.0, -6.0, -0.5]
+      maximum: [17.0, 6.0, 8.0]
+    dock:
+      position: [0.0, 0.0, 0.0]
+      contact_radius: 0.65
+      contact_height: 0.25
+      approach_altitude: 1.5
+      precision_enabled: false
+      marker_id: 7
+      marker_size: 0.8
+      marker_timeout: 2.0
+      alignment_tolerance: 0.18
+      descent_speed: 0.25
+      land_height: 0.6
+    battery:
+      source: simulated
+      initial_percent: 100.0
+      return_percent: 30.0
+      emergency_percent: 15.0
+      ready_percent: 95.0
+      reserve_percent: 5.0
+      discharge_per_second: 0.08
+      speed_load_per_second: 0.01
+      charge_per_second: 5.0
+    mission:
+      preflight_timeout: 30.0
+      arming_timeout: 15.0
+      flight_timeout: 300.0
+      landing_timeout: 60.0
+      auto_start: false
+      auto_repeat: false
+    safety:
+      state_timeout: 2.0
+      battery_timeout: 2.0
+      controller_timeout: 1.0
+      perception_timeout: 3.0
+    px4:
+      system_id: 1
+      source_system: 245
+      source_component: 191
+      target_timeout: 0.5
+    perception:
+      image_topic: /drone/camera/image_raw
+      camera_info_topic: /drone/camera/camera_info
+      min_area_pixels: 60
+      healthy_hsv_lower: [35, 60, 35]
+      healthy_hsv_upper: [95, 255, 255]
+      stressed_hsv_lower: [5, 80, 40]
+      stressed_hsv_upper: [34, 255, 255]
+      ground_height: 0.65
+      pose_tolerance: 0.2
+      camera_translation: [0.0, 0.0, -0.04]
+      save_interval: 1.0
+    inspection_records:
+      directory: logs/inspection
+      dedup_distance: 0.8

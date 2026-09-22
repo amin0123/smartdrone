@@ -25,8 +25,15 @@ def main() -> None:
         actual = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=path, text=True).strip()
         if actual != item['version']:
             raise RuntimeError(f'{path}: expected {item["version"]}, found {actual}; refusing reset')
+        if 'tag' in item:
+            # PX4's CMake version parser needs the annotated release tag even
+            # when the checkout itself is pinned by immutable commit.
+            run('git', 'fetch', '--depth', '1', 'origin', 'tag', item['tag'], cwd=path)
         if name == 'PX4-Autopilot':
             run('git', 'submodule', 'update', '--init', '--recursive', '--depth', '1', cwd=path)
+            # The SITL version-header generator still inspects NuttX tags.
+            run('git', 'fetch', '--depth', '1', 'origin', 'tag', 'nuttx-10.3.0',
+                cwd=path / 'platforms/nuttx/NuttX/nuttx')
         print(f'PIN VERIFIED {name}: {actual}', flush=True)
 
 

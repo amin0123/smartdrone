@@ -1,0 +1,11 @@
+diff --git a/platforms/posix/src/px4/common/px4_daemon/pxh.cpp b/platforms/posix/src/px4/common/px4_daemon/pxh.cpp
+--- a/platforms/posix/src/px4/common/px4_daemon/pxh.cpp
++++ b/platforms/posix/src/px4/common/px4_daemon/pxh.cpp
+@@ -40,6 +40,7 @@
+  */
+ 
+ #include <string>
++#include <cstdint>
+ #include <sstream>
+ #include <vector>
+ #include <algorithm>

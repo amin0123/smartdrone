@@ -24,6 +24,7 @@ shell profile, or existing Isaac installation will be replaced.
 | PX4 SITL | **v1.14.3**, commit `1dacb4cdef2d7145754fc788fa8dc482eed74b40` | Pegasus's documented development version; keep firmware/schema/protocol consistent. Not a recommendation to deploy old firmware to hardware. |
 | px4_msgs | **release/1.14**, pinned `ffb6e80e1c17e5714395611a020c282a87af8fa4` | Match the firmware's message definitions. Do not use main with 1.14.3. Verify consumed messages against PX4 sources. |
 | Micro XRCE-DDS Agent | **v2.4.2**, commit `57d086216d01ec43121845d385894a25987f8a2c` | 2.x agent for PX4 1.14's 2.x client. Do not substitute a 3.x agent. Build privately. |
+| Agent's Fast DDS | **v2.12.2**, commit `092848725b8425e4f05a8ccf7b3b8d513fabf733` | Tracked build-only patch replaces Agent's deleted `2.12.x` branch reference. Other transitive dependencies remain its upstream Fast CDR 1.1.1, foonathan memory 0.7-3 and spdlog 1.9.2. |
 | ROS 2 | **Jazzy Jalisco**, existing Noble Debian packages | Reuse native supported host installation; record exact Debian versions in `config/ros-packages.lock`. Fast DDS middleware (`rmw_fastrtps_cpp`). |
 | Development Python | **3.12** in conda **drone** | Matches Jazzy's CPython ABI. Pin package resolution in environment lock after installation. ROS shared libraries still come from `/opt/ros/jazzy`. |
 | Isaac Python | **Bundled 3.11** | Required by Kit/Isaac 5.1. Run in an isolated child process, never import host Jazzy's CPython 3.12 bindings there. |

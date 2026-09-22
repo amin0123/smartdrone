@@ -1,0 +1,19 @@
+diff --git a/src/modules/uxrce_dds_client/dds_topics.yaml b/src/modules/uxrce_dds_client/dds_topics.yaml
+--- a/src/modules/uxrce_dds_client/dds_topics.yaml
++++ b/src/modules/uxrce_dds_client/dds_topics.yaml
+@@ -4,6 +4,15 @@
+ #####
+ publications:
+ 
++  - topic: /fmu/out/vehicle_land_detected
++    type: px4_msgs::msg::VehicleLandDetected
++
++  - topic: /fmu/out/battery_status
++    type: px4_msgs::msg::BatteryStatus
++
++  - topic: /fmu/out/vehicle_command_ack
++    type: px4_msgs::msg::VehicleCommandAck
++
+   - topic: /fmu/out/collision_constraints
+     type: px4_msgs::msg::CollisionConstraints
+ 

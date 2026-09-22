@@ -8,13 +8,13 @@ work proceeds.
 |---|---|---|
 | Machine and compatibility audit | DONE | COMPATIBILITY.md; version sources checked before installation |
 | Architecture and roadmap | IN PROGRESS | Define runtime ownership and milestone acceptance |
-| Conda drone environment | NOT STARTED | Create Python 3.12 environment after audit |
-| Isaac 5.1 / Pegasus 5.1 | NOT STARTED | Separate install; preserve existing Isaac 6 RC |
-| PX4 1.14.3 SITL | NOT STARTED | Build and validate sensor/actuator connection |
+| Conda drone environment | DONE | Python 3.12.11; OpenCV/NumPy/rclpy imported; actual Jazzy node created |
+| Isaac 5.1 / Pegasus 5.1 | IN PROGRESS | Download in progress; Pegasus source pinned and Iris asset present |
+| PX4 1.14.3 SITL | IN PROGRESS | Build DONE with documented portability fixes; real sensor/flight validation next |
 | QGroundControl | NOT STARTED | Confirm vehicle heartbeat and state |
-| XRCE Agent and px4_msgs | NOT STARTED | Verify schemas and actual DDS state |
-| Coordinate transforms | NOT STARTED | Pure tests including attitudes and yaw |
-| Navigation | NOT STARTED | Boustrophedon planner, bounded position setpoints |
+| XRCE Agent and px4_msgs | IN PROGRESS | Agent built and listening UDP 8888; interfaces and gateway built; 10 schemas match |
+| Coordinate transforms | DONE | Six tests include named axes, invalid values and 100 attitude roundtrips |
+| Navigation | IN PROGRESS | Eight pure planner/tracker checks; physical flight still unverified |
 | Mission state machine | NOT STARTED | Explicit transitions and reasons |
 | Perception and records | NOT STARTED | Camera → detections → pose association → local report |
 | Battery and safety | NOT STARTED | Stale data, loss of controller, reserve decisions |
@@ -48,3 +48,34 @@ work proceeds.
   install matching Pegasus instead of altering the existing simulator.
 * System-level changes: none. Downloads, source builds and Python dependencies
   will remain in the repository's ignored directories and conda environment.
+* PX4 first configuration failed: `CMakeLists.txt:129 list index: 1 out of
+  range`, version printed as `1dacb4c..NOTFOUND`. Cause: shallow SHA-only fetch
+  omitted the annotated v1.14.3 tag expected by PX4's version parser. Fix:
+  fetch that exact tag without changing HEAD; make fetch script preserve it.
+* Pure logic suite: 17 passed. These do not advance the flight milestone table.
+* ROS interface build: `drone_core`, `drone_interfaces`, `px4_msgs` passed in
+  conda drone; all 10 gateway wire definitions match the firmware sources.
+* PX4 next build exposed `px_update_git_header.py:153 IndexError` because the
+  shallow NuttX checkout has no version tags. Fetch the existing upstream
+  `nuttx-10.3.0` metadata tag without changing its submodule commit. NuttX is not
+  executed in SITL.
+* Agent build failed `fatal: invalid reference: 2.12.x`. The upstream 2.4.2
+  superbuild refers to a deleted Fast DDS branch. Apply the tracked one-line
+  `patches/xrce-agent-fastdds-pin.patch` selecting official Fast DDS v2.12.2 by
+  SHA. No protocol version or runtime code was changed. Rebuild pending.
+* Host GCC 13 then exposed missing `<cstdint>` includes in PX4's POSIX shell and
+  Fast DDS generated statistics code. Tracked header/build patches supply the
+  standard header. PX4's optional legacy LPE also triggers `-Warray-bounds` in
+  generic matrix inversion; retain this diagnostic as a warning using the one
+  scoped `-Wno-error=array-bounds` flag. Stock EKF2 remains the active estimator.
+* Inspection of firmware DDS configuration found landed, battery and command ACK
+  outputs absent from the stock export list. Add these existing uORB topics via
+  the supported `dds_topics.yaml` mechanism, using a tracked patch; no message
+  schema changes are required. Rebuild is required before flight tests.
+* Pure logic suite: 25 passed after mission FSM and independent safety policy.
+* Build repairs verified: PX4 linked successfully; XRCE Agent installed locally
+  and started on UDP 8888. The ROS gateway initializes in conda drone. No flight
+  claim follows from these checks.
+* Pure logic suite: 29 passed, including lease expiry/replay and dock calculations.
+  One initial lease test used 1.4 < 14×0.1 due to floating representation; changed
+  the observation time to 1.45, preserving the strict backward-time rejection.

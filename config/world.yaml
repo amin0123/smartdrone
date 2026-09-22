@@ -1,0 +1,24 @@
+# ENU metres. This is the scene description, not a ROS parameter file.
+physics_dt: 0.004
+render_every: 4
+realtime: true
+dock: [0.0, 0.0, 0.0]
+spawn_height: 0.08
+field:
+  origin: [4.0, -3.0]
+  length: 8.0
+  width: 6.0
+  row_spacing: 3.0
+  plant_spacing: 2.0
+  canopy_height: 0.65
+  abnormal_every: 4
+obstacles:
+  - {name: water_tank, position: [-3.0, 4.5, 0.8], scale: [1.5, 1.5, 1.6]}
+  - {name: storage_crate, position: [14.0, 5.0, 0.5], scale: [1.0, 1.0, 1.0]}
+camera:
+  width: 640
+  height: 480
+  fps: 10.0
+  focal_length_mm: 18.0
+  horizontal_aperture_mm: 20.955
+  translation: [0.0, 0.0, -0.04]
