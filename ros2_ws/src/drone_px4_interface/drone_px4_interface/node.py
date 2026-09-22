@@ -17,6 +17,7 @@ from px4_msgs.msg import (
 from drone_interfaces.msg import VehicleState, FlightTarget, SafetyStatus, CommandResult
 from drone_interfaces.srv import VehicleCommand
 from drone_core.frames import enu_to_ned, ned_to_enu, yaw_enu_to_ned, attitude_ned_frd_to_enu_flu, rotation_xyzw
+from drone_core.frames import local_ned_to_map_enu, map_enu_to_local_ned, vector3
 from drone_core.ros_support import SENSOR_QOS, parameter, steady_timer, spin
 from .lease import ControllerLease
 
@@ -32,6 +33,7 @@ class Px4Gateway(Node):
         self.maximum = parameter(self, 'fence.maximum', [17., 6., 8.])
         self.max_speed = parameter(self, 'navigation.max_velocity', 2.)
         self.target_system = parameter(self, 'px4.system_id', 1)
+        self.map_origin = vector3(parameter(self, 'px4.map_origin_enu', [0., 0., 0.]))
         self.source_system = parameter(self, 'px4.source_system', 245)
         self.source_component = parameter(self, 'px4.source_component', 191)
         self.timestamp_mode = parameter(self, 'px4.timestamp_mode', 'system')
@@ -123,7 +125,8 @@ class Px4Gateway(Node):
         msg.landed = bool(land and self._fresh('landed', now) and land.landed)
         if pos and att:
             try:
-                msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = ned_to_enu((pos.x, pos.y, pos.z))
+                msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = local_ned_to_map_enu(
+                    (pos.x, pos.y, pos.z), self.map_origin)
                 msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z = ned_to_enu((pos.vx, pos.vy, pos.vz))
                 q = attitude_ned_frd_to_enu_flu((att.q[1], att.q[2], att.q[3], att.q[0]))
                 msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w = q
@@ -195,7 +198,7 @@ class Px4Gateway(Node):
         target.yawspeed = math.nan
         if mode.position:
             p = self.target.position
-            target.position = np.array(enu_to_ned((p.x, p.y, p.z)), dtype=np.float32)
+            target.position = np.array(map_enu_to_local_ned((p.x, p.y, p.z), self.map_origin), dtype=np.float32)
         else:
             v = self.target.velocity
             target.velocity = np.array(enu_to_ned((v.x, v.y, v.z)), dtype=np.float32)

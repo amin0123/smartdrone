@@ -35,8 +35,16 @@ Quaternion layout in core and ROS is **x,y,z,w**. PX4's attitude messages use
 **w,x,y,z**. Layout reordering and frame rotation are different operations.
 Random rotation roundtrip tests supplement named-axis examples.
 
-`map` is anchored to PX4's initial local origin for a single mission. The scene
-spawns at the configured dock origin. An estimator origin reset invalidates the
+`px4.map_origin_enu` states the ENU map location of PX4's initial NED origin.
+The default `(0,0,0)` matches the qualified station at the map origin. Position
+conversion is `p_map = origin + R_ENU_NED p_local`; the inverse subtracts the
+origin **before** rotating. Velocities and attitudes receive no translation.
+For origin `(10,20,3)` and local NED `(2,4,-1)`, the map position is `(14,22,4)`.
+These helpers are unit-tested, including equivalence to the original zero-origin
+flight profile. If moving the spawn/dock, update the scene dock, mission dock and
+this explicitly calibrated origin together; also update route/fence geometry.
+Map axes remain aligned ENU; arbitrary surveyed-map yaw is not implemented.
+The scene spawns at the configured dock position. An estimator origin reset invalidates the
 current route and observation association: safety must stop the mission instead
 of interpreting a sudden coordinate jump as real motion. Hardware requires an
 explicit surveyed map-to-local transform, including altitude datum.

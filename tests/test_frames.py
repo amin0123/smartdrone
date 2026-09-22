@@ -5,6 +5,7 @@ from scipy.spatial.transform import Rotation
 from drone_core.frames import (
     enu_to_ned, ned_to_enu, flu_to_frd, frd_to_flu, yaw_enu_to_ned,
     yaw_ned_to_enu, attitude_ned_frd_to_enu_flu, attitude_enu_flu_to_ned_frd,
+    local_ned_to_map_enu, map_enu_to_local_ned,
 )
 
 
@@ -22,6 +23,24 @@ def test_yaw_convention():
     assert yaw_enu_to_ned(math.pi / 2) == pytest.approx(0)
     for angle in np.linspace(-3.1, 3.1, 21):
         assert yaw_ned_to_enu(yaw_enu_to_ned(angle)) == pytest.approx(angle)
+
+
+def test_translated_map_origin_positions_roundtrip():
+    origin = (10., 20., 3.)
+    point = local_ned_to_map_enu((2., 4., -1.), origin)
+    assert point == (14., 22., 4.)
+    assert map_enu_to_local_ned(point, origin) == (2., 4., -1.)
+
+
+def test_zero_origin_preserves_qualified_baseline():
+    point = (1.5, -2., 3.)
+    assert local_ned_to_map_enu(point, (0, 0, 0)) == ned_to_enu(point)
+    assert map_enu_to_local_ned(point, (0, 0, 0)) == enu_to_ned(point)
+
+
+def test_map_origin_must_be_finite():
+    with pytest.raises(ValueError):
+        local_ned_to_map_enu((0, 0, 0), (0, float('nan'), 0))
 
 
 def test_full_attitude_roundtrip_and_north_facing_vehicle():

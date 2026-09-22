@@ -30,6 +30,16 @@ def ned_to_enu(value: Sequence[float]) -> tuple[float, float, float]:
     return tuple(ENU_FROM_NED @ vector3(value))
 
 
+def local_ned_to_map_enu(value: Sequence[float], origin_enu: Sequence[float]) -> tuple[float, float, float]:
+    """Position only: ENU location of the PX4 origin plus rotated local position."""
+    return tuple(vector3(origin_enu) + ENU_FROM_NED @ vector3(value))
+
+
+def map_enu_to_local_ned(value: Sequence[float], origin_enu: Sequence[float]) -> tuple[float, float, float]:
+    """Position inverse. Velocities use the rotation-only enu_to_ned helper."""
+    return enu_to_ned(vector3(value) - vector3(origin_enu))
+
+
 def flu_to_frd(value: Sequence[float]) -> tuple[float, float, float]:
     return tuple(FLU_FROM_FRD.T @ vector3(value))
 

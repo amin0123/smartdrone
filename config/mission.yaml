@@ -53,6 +53,7 @@
       perception_timeout: 3.0
     px4:
       system_id: 1
+      map_origin_enu: [0.0, 0.0, 0.0]
       source_system: 245
       source_component: 191
       target_timeout: 0.5
