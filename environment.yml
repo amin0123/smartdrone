@@ -1,0 +1,28 @@
+name: drone
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12.11
+  - pip=24.3.1
+  - pip:
+      - setuptools==75.8.0
+      - wheel==0.45.1
+      - numpy==1.26.4
+      - scipy==1.13.1
+      - PyYAML==6.0.2
+      - opencv-contrib-python-headless==4.10.0.84
+      - pytest==8.3.5
+      - pytest-cov==6.0.0
+      - pymavlink==2.4.49
+      - kconfiglib==14.1.0
+      - Jinja2==3.1.6
+      - empy==3.3.4
+      - jsonschema==4.23.0
+      - pyros-genmsg==0.5.8
+      - packaging==24.2
+      - toml==0.10.2
+      - future==1.0.0
+      - ninja==1.11.1.4
+      - colcon-common-extensions==0.3.0
+      - catkin-pkg==1.0.0
+      - lark==1.2.2
