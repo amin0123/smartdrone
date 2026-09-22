@@ -3,7 +3,11 @@
 set -euo pipefail
 DRONE_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 sim_path="${DRONE_ISAAC6_PATH:-$HOME/isaacsim}"
-[[ $(cat "$sim_path/VERSION") == 6.0.0* ]] || { echo 'Expected qualified Isaac 6.0.0 build' >&2; exit 1; }
+expected_version='6.0.0-rc.59+release.41464.5f2772bc.gl'
+[[ $(cat "$sim_path/VERSION") == "$expected_version" ]] || {
+  echo "Expected qualified Isaac build $expected_version; see docs/COMPATIBILITY.md" >&2
+  exit 1
+}
 exec env -u AMENT_PREFIX_PATH -u CMAKE_PREFIX_PATH -u COLCON_PREFIX_PATH \
   -u CONDA_PREFIX -u CONDA_DEFAULT_ENV -u VIRTUAL_ENV -u PYTHONHOME \
   PYTHONPATH="$DRONE_ROOT/.local/isaac6-python:$DRONE_ROOT/vendor/PegasusSimulator6/extensions/pegasus.simulator" \
