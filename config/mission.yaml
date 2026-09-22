@@ -22,7 +22,7 @@
       contact_radius: 0.65
       contact_height: 0.25
       approach_altitude: 1.5
-      precision_enabled: false
+      precision_enabled: true
       marker_id: 7
       marker_size: 0.8
       marker_timeout: 2.0
@@ -40,7 +40,7 @@
       speed_load_per_second: 0.01
       charge_per_second: 5.0
     mission:
-      preflight_timeout: 30.0
+      preflight_timeout: 60.0
       arming_timeout: 15.0
       flight_timeout: 300.0
       landing_timeout: 60.0
@@ -56,13 +56,16 @@
       source_system: 245
       source_component: 191
       target_timeout: 0.5
+      status_timeout: 2.5
+      timestamp_mode: receive_time
     perception:
       image_topic: /drone/camera/image_raw
+      reliable_images: true
       camera_info_topic: /drone/camera/camera_info
       min_area_pixels: 60
       healthy_hsv_lower: [35, 60, 35]
       healthy_hsv_upper: [95, 255, 255]
-      stressed_hsv_lower: [5, 80, 40]
+      stressed_hsv_lower: [25, 80, 40]
       stressed_hsv_upper: [34, 255, 255]
       ground_height: 0.65
       pose_tolerance: 0.2

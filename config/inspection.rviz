@@ -1,0 +1,59 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ''
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 20
+    Background Color: 35; 35; 35
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Ground grid (m)
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 40
+    - Class: rviz_default_plugins/TF
+      Name: Coordinate frames
+      Enabled: true
+      Frame Timeout: 2
+    - Class: rviz_default_plugins/Path
+      Name: Inspection route
+      Enabled: true
+      Color: 80; 220; 80
+      Line Style: Lines
+      Line Width: 0.05
+      Topic:
+        Value: /drone/planned_path
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/Odometry
+      Name: PX4 estimated flight
+      Enabled: true
+      Keep: 300
+      Position Tolerance: 0.15
+      Angle Tolerance: 0.2
+      Topic:
+        Value: /drone/odometry
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 10
+    - Class: rviz_default_plugins/Image
+      Name: Downward RGB
+      Enabled: true
+      Topic:
+        Value: /drone/camera/image_raw
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        Depth: 2
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 24
+      Focal Point: {X: 5, Y: 0, Z: 0}
+      Pitch: 0.75
+      Yaw: 0.8
+Window Geometry:
+  Width: 1280
+  Height: 800

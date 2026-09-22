@@ -21,7 +21,8 @@ class DockCommand:
 def descent_step(vehicle: Vehicle, known_station: Point, marker_station: Point | None,
                  marker_age: float, dt: float, *, use_marker: bool,
                  marker_timeout: float = 2., tolerance: float = .18,
-                 descent_speed: float = .25, land_height: float = .6) -> DockCommand:
+                 descent_speed: float = .25, land_height: float = .6,
+                 reference_z: float | None = None, max_vertical_lead: float = .4) -> DockCommand:
     if not vehicle.localized or not math.isfinite(dt) or dt < 0:
         raise ValueError('Descent needs valid localization and elapsed time')
     station, source = known_station, 'known_station'
@@ -32,6 +33,8 @@ def descent_step(vehicle: Vehicle, known_station: Point, marker_station: Point |
     height = vehicle.position[2] - known_station[2]
     # A stale or rejected marker falls back to the established Stage-1 station
     # approach; it never commands a descent toward an arbitrary marker jump.
+    reference_z = vehicle.position[2] if reference_z is None else reference_z
     target_z = max(known_station[2] + land_height,
-                   vehicle.position[2] - descent_speed * min(dt, .2)) if aligned else vehicle.position[2]
+                   vehicle.position[2] - max_vertical_lead,
+                   reference_z - descent_speed * min(dt, .2)) if aligned else vehicle.position[2]
     return DockCommand((station[0], station[1], target_z), aligned and height <= land_height + .1, source)
