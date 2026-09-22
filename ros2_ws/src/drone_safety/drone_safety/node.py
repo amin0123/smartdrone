@@ -25,7 +25,7 @@ class SafetyNode(Node):
         self.station = tuple(parameter(self, 'dock.position', [0., 0., 0.]))
         self.speed = parameter(self, 'inspection.velocity', 1.)
         self.vehicle, self.percent, self.phase = Vehicle(), math.nan, 'IDLE'
-        self.at = {k: float('-inf') for k in ('state', 'battery', 'mission', 'control', 'perception')}
+        self.at = {k: float('-inf') for k in ('state', 'battery', 'mission', 'control', 'perception', 'recorder')}
         self.mission_id, self.started_at = '', time.monotonic()
         self.previous_reason = ''
         self.pub = self.create_publisher(SafetyStatus, '/drone/safety', 10)
@@ -34,6 +34,7 @@ class SafetyNode(Node):
         self.create_subscription(MissionStatus, '/drone/mission_status', self._mission, LATCHED_QOS)
         self.create_subscription(Empty, '/drone/offboard_heartbeat', lambda _: self._seen('control'), 10)
         self.create_subscription(Empty, '/drone/perception_heartbeat', lambda _: self._seen('perception'), 10)
+        self.create_subscription(Empty, '/drone/recorder_heartbeat', lambda _: self._seen('recorder'), 10)
         steady_timer(self, .1, self._tick)
 
     def _seen(self, key):
@@ -62,6 +63,7 @@ class SafetyNode(Node):
             state_age=now-self.at['state'], battery_age=now-self.at['battery'],
             mission_age=now-self.at['mission'], control_age=now-self.at['control'],
             perception_age=now-self.at['perception'], elapsed=now-self.started_at,
+            recorder_age=now-self.at['recorder'],
             return_seconds=return_seconds)
         decision = self.monitor.evaluate(data)
         msg = SafetyStatus()

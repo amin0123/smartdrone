@@ -3,8 +3,12 @@ import math
 import time
 import numpy as np
 from rclpy.node import Node
+from rclpy.qos import QoSProfile
+from rclpy.duration import Duration
 from std_msgs.msg import Empty
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import TransformStamped
+from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 from px4_msgs.msg import (
     VehicleStatus, VehicleLocalPosition, VehicleAttitude, BatteryStatus,
     VehicleLandDetected, VehicleCommandAck, VehicleCommand as Px4Command,
@@ -21,6 +25,7 @@ class Px4Gateway(Node):
     def __init__(self):
         super().__init__('px4_gateway')
         self.timeout = parameter(self, 'safety.state_timeout', 1.)
+        self.status_timeout = parameter(self, 'px4.status_timeout', 2.5)
         self.safety_timeout = parameter(self, 'safety.controller_timeout', 1.)
         self.lease = ControllerLease(parameter(self, 'px4.target_timeout', .5))
         self.minimum = parameter(self, 'fence.minimum', [-5., -6., -.5])
@@ -29,10 +34,14 @@ class Px4Gateway(Node):
         self.target_system = parameter(self, 'px4.system_id', 1)
         self.source_system = parameter(self, 'px4.source_system', 245)
         self.source_component = parameter(self, 'px4.source_component', 191)
-        self.data, self.received = {}, {}
+        self.timestamp_mode = parameter(self, 'px4.timestamp_mode', 'system')
+        if self.timestamp_mode not in {'system', 'receive_time'}:
+            raise ValueError('px4.timestamp_mode must be system or receive_time')
+        self.data, self.received, self.received_sim = {}, {}, {}
         self.target = None
         self.safety, self.safety_at = None, float('-inf')
         self.streaming_since = None
+        self.streaming_sim_since = None
         self.native_landing = False
         self.was_armed = False
         self.last_command = {}
@@ -40,9 +49,19 @@ class Px4Gateway(Node):
         self.odom_pub = self.create_publisher(Odometry, '/drone/odometry', SENSOR_QOS)
         self.pulse_pub = self.create_publisher(Empty, '/drone/offboard_heartbeat', 10)
         self.result_pub = self.create_publisher(CommandResult, '/drone/command_result', 10)
-        self.mode_pub = self.create_publisher(OffboardControlMode, '/fmu/in/offboard_control_mode', 10)
-        self.target_pub = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', 10)
+        stream_qos = QoSProfile(depth=1, lifespan=Duration(seconds=.2))
+        self.mode_pub = self.create_publisher(OffboardControlMode, '/fmu/in/offboard_control_mode', stream_qos)
+        self.target_pub = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', stream_qos)
         self.command_pub = self.create_publisher(Px4Command, '/fmu/in/vehicle_command', 10)
+        self.tf = TransformBroadcaster(self)
+        self.static_tf = StaticTransformBroadcaster(self)
+        camera = TransformStamped()
+        camera.header.stamp, camera.header.frame_id = self.get_clock().now().to_msg(), 'base_link'
+        camera.child_frame_id = 'down_camera_optical'
+        xyz = parameter(self, 'perception.camera_translation', [0., 0., -.04])
+        camera.transform.translation.x, camera.transform.translation.y, camera.transform.translation.z = map(float, xyz)
+        camera.transform.rotation.x = 1.  # Fixed down-camera optical convention: 180° about body X.
+        self.static_tf.sendTransform(camera)
         for key, cls, topic in (
             ('status', VehicleStatus, 'vehicle_status'),
             ('position', VehicleLocalPosition, 'vehicle_local_position'),
@@ -60,9 +79,16 @@ class Px4Gateway(Node):
 
     def _receive(self, key, msg):
         self.data[key], self.received[key] = msg, time.monotonic()
+        self.received_sim[key] = self.get_clock().now().nanoseconds*1e-9
 
     def _fresh(self, key, now):
-        return now - self.received.get(key, float('-inf')) <= self.timeout
+        # Landed is 1 Hz and status 2 Hz in PX4 simulation time. Age those slow
+        # reports in ROS time, while high-rate pose uses an independent wall
+        # watchdog, so paused physics or a disconnected DDS link still fails safe.
+        if key in {'status', 'landed', 'battery'}:
+            age = self.get_clock().now().nanoseconds*1e-9-self.received_sim.get(key, float('-inf'))
+            return 0 <= age <= self.status_timeout
+        return now-self.received.get(key, float('-inf')) <= self.timeout
 
     def _safety(self, msg):
         self.safety, self.safety_at = msg, time.monotonic()
@@ -90,6 +116,7 @@ class Px4Gateway(Node):
         msg.connected = all(self._fresh(k, now) for k in ('status', 'position', 'attitude', 'landed'))
         status, pos, att, land, battery = (self.data.get(k) for k in ('status', 'position', 'attitude', 'landed', 'battery'))
         if status:
+            msg.preflight_ok = bool(self._fresh('status', now) and status.pre_flight_checks_pass)
             msg.armed = status.arming_state == status.ARMING_STATE_ARMED
             msg.offboard = status.nav_state == status.NAVIGATION_STATE_OFFBOARD
             msg.nav_state, msg.failsafe = status.nav_state, status.failsafe
@@ -100,10 +127,12 @@ class Px4Gateway(Node):
                 msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z = ned_to_enu((pos.vx, pos.vy, pos.vz))
                 q = attitude_ned_frd_to_enu_flu((att.q[1], att.q[2], att.q[3], att.q[0]))
                 msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w = q
-                msg.localized = bool(msg.connected and pos.xy_valid and pos.z_valid and pos.v_xy_valid and pos.v_z_valid and pos.heading_good_for_control)
+                # PX4 1.14 heading_good_for_control means final IN-FLIGHT magnetic
+                # alignment, not ground readiness. Native preflight owns arming.
+                msg.localized = bool(msg.connected and pos.xy_valid and pos.z_valid and pos.v_xy_valid and pos.v_z_valid)
             except ValueError:
                 msg.localized = False
-            msg.reset_counter = int(pos.xy_reset_counter) * 65536 + int(pos.z_reset_counter) * 256 + int(pos.heading_reset_counter)
+            msg.reset_counter = int(pos.xy_reset_counter) * 256 + int(pos.z_reset_counter)
         if battery and self._fresh('battery', now) and battery.connected:
             msg.battery_valid = bool(math.isfinite(battery.remaining) and 0 <= battery.remaining <= 1)
             msg.battery_percent = float(battery.remaining * 100) if msg.battery_valid else 0.
@@ -133,8 +162,16 @@ class Px4Gateway(Node):
             body_velocity = rotation_xyzw((q.x, q.y, q.z, q.w)).inv().apply((v.x, v.y, v.z))
             odom.twist.twist.linear.x, odom.twist.twist.linear.y, odom.twist.twist.linear.z = map(float, body_velocity)
             self.odom_pub.publish(odom)
+            transform = TransformStamped()
+            transform.header, transform.child_frame_id = state.header, 'base_link'
+            transform.transform.translation.x = state.pose.position.x
+            transform.transform.translation.y = state.pose.position.y
+            transform.transform.translation.z = state.pose.position.z
+            transform.transform.rotation = state.pose.orientation
+            self.tf.sendTransform(transform)
         if not self._permitted(state, now):
             self.streaming_since = None
+            self.streaming_sim_since = None
             if state.armed and state.offboard and not self.native_landing:
                 self._send(Px4Command.VEHICLE_CMD_NAV_LAND)
                 self.native_landing = True
@@ -142,7 +179,8 @@ class Px4Gateway(Node):
             return
         if self.streaming_since is None:
             self.streaming_since = now
-        stamp = self.get_clock().now().nanoseconds // 1000
+            self.streaming_sim_since = self.get_clock().now().nanoseconds*1e-9
+        stamp = self._wire_timestamp()
         mode = OffboardControlMode()
         mode.timestamp = stamp
         mode.position = self.target.mode == FlightTarget.POSITION
@@ -170,7 +208,9 @@ class Px4Gateway(Node):
         now = time.monotonic()
         state = self._state(now)
         command = request.command
-        warmed = self.streaming_since is not None and now - self.streaming_since >= 1.2
+        sim_now = self.get_clock().now().nanoseconds*1e-9
+        warmed = (self.streaming_since is not None and now-self.streaming_since >= 1.2 and
+                  self.streaming_sim_since is not None and sim_now-self.streaming_sim_since >= 1.2)
         if command in {'arm', 'offboard'} and (not self._permitted(state, now) or not warmed):
             response.accepted, response.message = False, 'Fresh state, safety and 1.2 s offboard warmup required'
             return response
@@ -199,7 +239,7 @@ class Px4Gateway(Node):
         if now - self.last_command.get(key, float('-inf')) < .5:
             return
         msg = Px4Command()
-        msg.timestamp = self.get_clock().now().nanoseconds // 1000
+        msg.timestamp = self._wire_timestamp()
         msg.command, msg.param1, msg.param2 = command, param1, param2
         msg.param5, msg.param6, msg.param7 = math.nan, math.nan, math.nan
         msg.target_system, msg.target_component = self.target_system, 1
@@ -207,6 +247,13 @@ class Px4Gateway(Node):
         msg.from_external = True
         self.command_pub.publish(msg)
         self.last_command[key] = now
+
+    def _wire_timestamp(self):
+        # PX4 1.14's generated ucdr deserializer explicitly replaces zero with
+        # hrt_absolute_time(). Use its native receive-time facility in slow SITL,
+        # where the agent's real-time clock estimator otherwise drifts. Intent
+        # age/lease checks remain mandatory, and stream QoS expires old samples.
+        return 0 if self.timestamp_mode == 'receive_time' else time.time_ns() // 1000
 
     def _ack(self, msg):
         if msg.target_system != self.source_system or msg.target_component != self.source_component:

@@ -7,5 +7,6 @@ export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"
 export PATH="$DRONE_ROOT/px4/config:$PATH"
 mkdir -p "$DRONE_ROOT/.local/px4-instance"
 cd "$DRONE_ROOT/.local/px4-instance"
-exec "$px4_source/build/px4_sitl_default/bin/px4" "$px4_source/ROMFS/px4fmu_common" \
-  -s "$px4_source/ROMFS/px4fmu_common/init.d-posix/rcS" -i 0 "$@"
+px4_build="$px4_source/build/px4_sitl_default"
+# The compiled etc tree includes FTP metadata used by QGC; source ROMFS does not.
+exec "$px4_build/bin/px4" "$px4_build/etc" -s "$px4_build/etc/init.d-posix/rcS" -i 0 "$@"

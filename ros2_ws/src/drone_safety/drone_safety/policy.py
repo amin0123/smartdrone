@@ -15,6 +15,15 @@ class SafetyConfig:
     controller_timeout: float = 1.
     perception_timeout: float = 3.
 
+    def __post_init__(self):
+        if not all(math.isfinite(x) for x in (*self.minimum, *self.maximum)):
+            raise ValueError('Geofence must be finite')
+        if any(a >= b for a, b in zip(self.minimum, self.maximum)):
+            raise ValueError('Geofence bounds are reversed')
+        if min(self.state_timeout, self.battery_timeout, self.mission_timeout,
+               self.controller_timeout, self.perception_timeout) <= 0:
+            raise ValueError('Safety timeouts must be positive')
+
 
 @dataclass(frozen=True)
 class SafetyInput:
@@ -26,6 +35,7 @@ class SafetyInput:
     mission_age: float = 0.
     control_age: float = 0.
     perception_age: float = 0.
+    recorder_age: float = 0.
     elapsed: float = 0.
     return_seconds: float = 0.
 
@@ -62,12 +72,14 @@ class SafetyMonitor:
             decision = fault('battery_stale')
         elif airborne and data.mission_age > c.controller_timeout:
             decision = fault('mission_controller_lost')
-        elif v.offboard and data.control_age > c.controller_timeout:
+        elif v.armed and v.offboard and data.control_age > c.controller_timeout:
             decision = fault('offboard_stream_lost')
-        elif data.elapsed > c.mission_timeout and data.phase not in {'RETURN_HOME', 'PRECISION_LANDING', 'DOCKED', 'CHARGING', 'READY', 'MISSION_ABORTED'}:
+        elif data.elapsed > c.mission_timeout and data.phase in {'TAKEOFF', 'TRANSIT_TO_INSPECTION_AREA', 'INSPECTION'}:
             decision = Decision(Severity.RETURN, 'mission_timeout')
         elif data.phase == 'INSPECTION' and data.perception_age > c.perception_timeout:
             decision = Decision(Severity.RETURN, 'perception_lost')
+        elif data.phase == 'INSPECTION' and data.recorder_age > c.perception_timeout:
+            decision = Decision(Severity.RETURN, 'inspection_recorder_lost')
         else:
             decision = self.battery.decide(data.battery_percent, data.return_seconds)
             if preflight and decision.severity != Severity.OK:

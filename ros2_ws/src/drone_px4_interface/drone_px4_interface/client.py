@@ -1,4 +1,5 @@
 """High-level ENU client; no upstream PX4 message dependency here."""
+import time
 from drone_interfaces.msg import FlightTarget
 from drone_interfaces.srv import VehicleCommand
 from drone_core.ros_support import SENSOR_QOS
@@ -10,12 +11,14 @@ class Px4Client:
         self.node = node
         self.sequence = 0
         self.state = None
+        self.state_at = float('-inf')
         self.target_pub = node.create_publisher(FlightTarget, '/drone/target', 10)
         self.commands = node.create_client(VehicleCommand, '/drone/vehicle_command')
         self.subscription = node.create_subscription(VehicleState, '/drone/state', self._state, SENSOR_QOS)
 
     def _state(self, msg):
         self.state = msg
+        self.state_at = time.monotonic()
 
     def get_vehicle_state(self):
         return self.state

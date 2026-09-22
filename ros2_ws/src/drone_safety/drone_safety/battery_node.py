@@ -56,7 +56,7 @@ class BatteryNode(Node):
         self.last_time = now
         fresh = wall - self.state_at <= self.timeout and self.vehicle.connected
         contact = fresh and dock_contact(self.vehicle, self.station, self.radius, self.height_tolerance)
-        charging = contact and self.phase == 'CHARGING' and wall - self.mission_at < 1.
+        charging = self.source == 'simulated' and contact and self.phase == 'CHARGING' and wall - self.mission_at < 1.
         if self.source == 'simulated':
             percent = self.model.step(dt, armed=self.vehicle.armed, speed=self.vehicle.speed,
                                       dock_contact=contact, charging_requested=charging)

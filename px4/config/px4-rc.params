@@ -1,0 +1,23 @@
+#!/bin/sh
+# PX4's rcS explicitly searches PATH for this customization hook.
+# These apply only to the private SITL process. Never upload wholesale to hardware.
+param set COM_RC_IN_MODE 4
+param set COM_OF_LOSS_T 0.5
+param set COM_OBL_RC_ACT 4
+param set COM_DISARM_LAND 2
+param set MPC_XY_CRUISE 1.5
+param set MPC_XY_VEL_MAX 2.0
+param set MPC_Z_VEL_MAX_UP 1.0
+param set MPC_Z_VEL_MAX_DN 0.6
+param set MPC_LAND_SPEED 0.4
+param set MIS_TAKEOFF_ALT 3.0
+# Native takeoff otherwise accepts an altitude 0.8 m short of the request.
+param set NAV_MC_ALT_RAD 0.2
+param set RTL_RETURN_ALT 4.0
+param set RTL_DESCEND_ALT 1.5
+param set GF_ACTION 3
+param set GF_MAX_HOR_DIST 25
+param set GF_MAX_VER_DIST 8
+# The mission battery is an explicit ROS simulation adapter. Keep the native
+# simulator's floor distinct; native battery checks remain enabled.
+param set SIM_BAT_MIN_PCT 50

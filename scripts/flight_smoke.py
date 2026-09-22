@@ -55,19 +55,27 @@ def main() -> None:
         link.target_system = latest['HEARTBEAT'].get_srcSystem()
         link.target_component = 1
         for message_id in (mavutil.mavlink.MAVLINK_MSG_ID_LOCAL_POSITION_NED,
+                           mavutil.mavlink.MAVLINK_MSG_ID_GLOBAL_POSITION_INT,
                            mavutil.mavlink.MAVLINK_MSG_ID_EXTENDED_SYS_STATE,
                            mavutil.mavlink.MAVLINK_MSG_ID_HOME_POSITION):
             command(mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL, message_id, 200000)
-        wait('local position and home', lambda: 'LOCAL_POSITION_NED' in latest and 'HOME_POSITION' in latest, 60)
+        wait('local and global position and home', lambda: all(k in latest for k in
+             ('LOCAL_POSITION_NED', 'GLOBAL_POSITION_INT', 'HOME_POSITION')), 60)
         # Let the EKF settle using sensor data; never force-arm around checks.
         settle = time.monotonic() + 5
         while time.monotonic() < settle:
             pump()
         command(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 1.)
         wait('armed', lambda: bool(latest['HEARTBEAT'].base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED), 15)
-        amsl = latest['HOME_POSITION'].altitude / 1000 + args.altitude
+        # HOME_POSITION can precede EKF vertical-origin convergence. Use the
+        # current estimator global altitude, and verify a relative local climb.
+        start_z = latest['LOCAL_POSITION_NED'].z
+        amsl = latest['GLOBAL_POSITION_INT'].alt / 1000 + args.altitude
+        evidence['takeoff_request'] = {'start_ned_z': start_z, 'target_amsl': amsl,
+                                      'relative_climb': args.altitude}
         command(mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0., 0., 0., math.nan, math.nan, math.nan, amsl)
-        wait('takeoff altitude', lambda: latest.get('LOCAL_POSITION_NED') is not None and latest['LOCAL_POSITION_NED'].z < -args.altitude + .5)
+        wait('takeoff altitude', lambda: latest.get('LOCAL_POSITION_NED') is not None and
+             latest['LOCAL_POSITION_NED'].z < start_z-args.altitude+.3, 90)
         command(mavutil.mavlink.MAV_CMD_NAV_LAND, 0., 0., 0., math.nan, math.nan, math.nan, math.nan)
         wait('landed and disarmed', lambda: 'EXTENDED_SYS_STATE' in latest and
              latest['EXTENDED_SYS_STATE'].landed_state == mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND and
@@ -79,6 +87,8 @@ def main() -> None:
             command(mavutil.mavlink.MAV_CMD_NAV_LAND, 0., 0., 0., math.nan, math.nan, math.nan, math.nan)
         raise
     finally:
+        evidence['final_messages'] = {k: v.to_dict() for k, v in latest.items()
+            if k in {'HEARTBEAT', 'LOCAL_POSITION_NED', 'GLOBAL_POSITION_INT', 'EXTENDED_SYS_STATE', 'COMMAND_ACK'}}
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(evidence, indent=2))
         link.close()

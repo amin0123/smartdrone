@@ -3,6 +3,7 @@ geometry_msgs/Pose pose
 geometry_msgs/Twist twist
 bool connected
 bool localized
+bool preflight_ok
 bool armed
 bool landed
 bool offboard
@@ -11,4 +12,3 @@ bool battery_valid
 float32 battery_percent
 uint32 reset_counter
 uint8 nav_state
-
