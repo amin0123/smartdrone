@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-22",
+  "conda_environment": "drone",
+  "python": "3.12.11",
+  "automated_tests": {
+    "passed": 44,
+    "skipped": 0
+  },
+  "ros_packages_built": 11,
+  "px4_schemas_checked": 10,
+  "restart_smoke": {
+    "exit_code": 0,
+    "simulation_seconds": 5.0,
+    "no_orphan_px4": true,
+    "log": "logs/isaac6-final-restart.log"
+  },
+  "git_runtime_commit": "7f41fa1072b913b8ee1f4d7cc37388b83310a36b",
+  "note": "Flight trials were recorded across the documented development commits; final map-origin default is zero and pause flight exercised it."
+}

@@ -25,7 +25,9 @@ uORB is PX4's internal publish/subscribe bus. The XRCE client serializes selecte
 uORB types and the Agent represents them as DDS entities. `px4_msgs` generates
 the corresponding ROS types. Matching field order and types is essential:
 similar-looking message names are insufficient. `scripts/check_px4_schemas.py`
-compares every consumed wire definition. `patches/px4-inspection-dds-topics.patch`
+compares the nine live wire types plus VehicleOdometry, retained as a checked
+optional telemetry schema. Standard `/drone/odometry` is currently composed from
+local position and attitude. `patches/px4-inspection-dds-topics.patch`
 adds the stock battery, land detector and command ACK outputs omitted from the
 1.14 default list. Rebuild firmware after altering this export configuration.
 

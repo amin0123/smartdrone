@@ -1,7 +1,7 @@
 # Architecture
 
 ```text
-Isaac Sim 5.1 / PhysX / RTX
+Isaac Sim (qualified profile) / PhysX / RTX
   field + dock + physical Iris
     ├── Pegasus sensor models ── MAVLink HIL TCP 4560 ── PX4 SITL
     │                                                │
@@ -41,3 +41,14 @@ The simulator uses its bundled Python. ROS nodes and pure-logic tests use the
 `drone` environment and the native Jazzy ABI. Standard DDS messages isolate the
 two Python versions. Simulation-only battery/charging and scene construction are
 replaceable adapters; mission behavior must consume the same state on hardware.
+
+
+The installed launch graph publishes `map → base_link → down_camera_optical`
+for RViz and a latched `/drone/planned_path`. The detector uses explicit calibrated
+image-time pose interpolation rather than the latest TF lookup. `drone_core`
+contains shared geometry and contract helpers; it has no PX4 or Isaac imports.
+
+Depth is published for future obstacle sensing. The first planner checks known
+static obstacle volumes before arming; it does not claim online collision
+avoidance. The station is a simulated contact region, and the charge adapter
+models percentage rather than electrochemical or electrical charging physics.
