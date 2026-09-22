@@ -1,0 +1,14 @@
+std_msgs/Header header
+geometry_msgs/Pose pose
+geometry_msgs/Twist twist
+bool connected
+bool localized
+bool armed
+bool landed
+bool offboard
+bool failsafe
+bool battery_valid
+float32 battery_percent
+uint32 reset_counter
+uint8 nav_state
+
