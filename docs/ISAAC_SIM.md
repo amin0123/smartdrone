@@ -55,3 +55,10 @@ Flight trials should run without a fixed `--duration`: a short simulator timeout
 can stop physics during landing. Stop the process after landed/disarmed state or
 use the documented test harness. Native PX4 ULogs are under the private runtime's
 `log/` directory; simulator output and mission evidence are under `logs/`.
+
+
+For the GUI, omit `--headless`. `config/world.yaml` → `viewport.eye` and
+`viewport.target` set the spectator view of the whole field. This is independent
+of the vehicle's calibrated RGB/depth camera. The Isaac 6 adapter uses
+`ViewportCameraState(viewport=...)`; passing the viewport as its first positional
+argument incorrectly treats that object as a camera path in the pinned Kit API.

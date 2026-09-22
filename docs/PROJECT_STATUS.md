@@ -236,8 +236,30 @@ superseded by later verified results and the current tables above.
   0, and left no PX4 or simulator process. Previous SIGINT shutdown also left no
   orphan PX4. Evidence: `logs/isaac6-final-restart.log`. ROS/Agent/RViz test
   processes were stopped after landed/disarmed confirmation; the QGC test GUI
-  required a final forced close after ignoring termination signals. All project
-  runtimes are now stopped so the documented first-launch commands can be used.
+  required a final forced close after ignoring termination signals. At the end of that qualification run, all project runtimes were stopped.
+  The later interactive launch is recorded below.
 * Final source checks: all Python modules compile, shell wrappers pass `bash -n`,
   local documentation links resolve, Git whitespace checks pass. The final
   source build remains 11 packages; test result remains 44 passing tests.
+
+
+## Interactive GUI launch — 2026-09-22
+
+**DONE:** Isaac 6 GUI, physical Pegasus/PX4 aircraft, full ROS launch with XRCE
+Agent, and QGroundControl were started and left running at the owner's request.
+Live checks confirmed connected/localized PX4 with native preflight ready,
+landed/disarmed aircraft, battery 100%, safety OK, and RGB/depth frames at
+640×480. Mission state is IDLE, awaiting its explicit start request.
+
+GUI validation exposed a spectator-camera bug in the open Pegasus port:
+`ViewportCameraState(viewport)` passed a viewport object as the camera path.
+The project adapter now uses the pinned API's `viewport=` keyword and explicit
+Gf vectors. Spectator eye/target are configurable in `config/world.yaml`.
+The actual window was inspected: all crop rows, obstacles and dock are visible.
+This changes only the observer view; sensor geometry and flight control remain
+as qualified. Python compilation and Git whitespace checks passed.
+
+Runtime logs, verified readiness and current process IDs are under
+`logs/interactive-20260922T221911Z/`; `logs/current-interactive-run` points there.
+The initial short-lived background-shell launch was replaced with persistent
+runtime sessions. The final GUI/ROS restart was made while landed/disarmed.

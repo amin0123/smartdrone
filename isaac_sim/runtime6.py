@@ -23,3 +23,16 @@ class World6:
         SimulationManager.step(steps=1)
         if render:
             RenderingManager.render()
+
+
+def set_viewport_camera(eye, target):
+    """Position the spectator camera using the pinned Kit viewport API."""
+    from omni.kit.viewport.utility import get_active_viewport
+    from omni.kit.viewport.utility.camera_state import ViewportCameraState
+    from pxr import Gf
+    viewport = get_active_viewport()
+    if viewport is not None:
+        # The first positional argument is a camera path, not a ViewportAPI.
+        camera = ViewportCameraState(viewport=viewport)
+        camera.set_position_world(Gf.Vec3d(*eye), True)
+        camera.set_target_world(Gf.Vec3d(*target), True)

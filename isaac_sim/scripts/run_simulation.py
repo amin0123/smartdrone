@@ -74,12 +74,15 @@ def main() -> None:
     vehicle = Multirotor('/World/quadrotor', ROBOTS['Iris'], 0,
         [dock[0], dock[1], dock[2] + settings['spawn_height']],
         [0., 0., 0., 1.], config=cfg)
+    view = settings.get('viewport', {'eye': [16., -18., 14.], 'target': [5., 0., 0.]})
     if PROFILE == 5:
-        set_camera_view(eye=np.array([16., -18., 14.]), target=np.array([5., 0., 0.]))
+        set_camera_view(eye=np.array(view['eye']), target=np.array(view['target']))
         from sensors.ros_camera import RosCamera
         sensors = RosCamera(world, settings['camera'], enabled=args.cameras)
     else:
-        pg.set_viewport_camera([16., -18., 14.], [5., 0., 0.])
+        if not args.headless:
+            from runtime6 import set_viewport_camera
+            set_viewport_camera(view['eye'], view['target'])
         from sensors.ros_camera6 import RosCamera6
         sensors = RosCamera6(world, settings['camera'], enabled=args.cameras)
     process, log, exit_code = None, None, 0
