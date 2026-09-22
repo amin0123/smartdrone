@@ -1,0 +1,58 @@
+{
+  "scenario": "emergency-battery",
+  "transitions": [
+    {
+      "state": "PRE_FLIGHT_CHECK",
+      "reason": "mission_requested",
+      "simulation_time": 172.168,
+      "wall_time": 1790113327.7259314
+    },
+    {
+      "state": "ARMING",
+      "reason": "state_battery_camera_recorder_route_and_stream_ready",
+      "simulation_time": 172.688,
+      "wall_time": 1790113329.4246564
+    },
+    {
+      "state": "TAKEOFF",
+      "reason": "PX4_confirmed_offboard_and_armed",
+      "simulation_time": 173.688,
+      "wall_time": 1790113332.824689
+    },
+    {
+      "state": "FAILSAFE",
+      "reason": "battery_critical_or_return_unreachable",
+      "simulation_time": 181.288,
+      "wall_time": 1790113361.9244204
+    },
+    {
+      "state": "EMERGENCY_LANDING",
+      "reason": "battery_critical_or_return_unreachable",
+      "simulation_time": 181.288,
+      "wall_time": 1790113361.924774
+    },
+    {
+      "state": "MISSION_ABORTED",
+      "reason": "failsafe_landed_disarmed:battery_critical_or_return_unreachable",
+      "simulation_time": 187.708,
+      "wall_time": 1790113385.4248762
+    }
+  ],
+  "visible_marker_count": 0,
+  "battery_injected": true,
+  "passed": true,
+  "mission_id": "42159bf3e033434d90462198d1683691",
+  "final_state": {
+    "sim_time": 187.988,
+    "position_enu": [
+      0.02190878428518772,
+      -0.011376508511602879,
+      0.01346825622022152
+    ],
+    "armed": false,
+    "landed": true,
+    "offboard": true,
+    "connected": true,
+    "battery_percent": 9.468787908554077
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "scenario": "low-battery",
+  "transitions": [
+    {
+      "state": "PRE_FLIGHT_CHECK",
+      "reason": "mission_requested",
+      "simulation_time": 2.648,
+      "wall_time": 1790112750.7410536
+    },
+    {
+      "state": "ARMING",
+      "reason": "state_battery_camera_recorder_route_and_stream_ready",
+      "simulation_time": 6.568,
+      "wall_time": 1790112762.7245147
+    },
+    {
+      "state": "TAKEOFF",
+      "reason": "PX4_confirmed_offboard_and_armed",
+      "simulation_time": 6.848,
+      "wall_time": 1790112763.6258957
+    },
+    {
+      "state": "TRANSIT_TO_INSPECTION_AREA",
+      "reason": "takeoff_altitude_reached",
+      "simulation_time": 16.928,
+      "wall_time": 1790112795.2251143
+    },
+    {
+      "state": "INSPECTION",
+      "reason": "inspection_entry_reached",
+      "simulation_time": 23.508,
+      "wall_time": 1790112815.9251258
+    },
+    {
+      "state": "RETURN_HOME",
+      "reason": "battery_return_reserve",
+      "simulation_time": 23.568,
+      "wall_time": 1790112816.1248014
+    },
+    {
+      "state": "PRECISION_LANDING",
+      "reason": "above_station",
+      "simulation_time": 30.008,
+      "wall_time": 1790112838.5250192
+    },
+    {
+      "state": "DOCKED",
+      "reason": "landed_disarmed_at_station",
+      "simulation_time": 43.908,
+      "wall_time": 1790112882.8244884
+    },
+    {
+      "state": "CHARGING",
+      "reason": "stable_dock_contact",
+      "simulation_time": 44.248,
+      "wall_time": 1790112883.9246805
+    },
+    {
+      "state": "READY",
+      "reason": "battery_ready",
+      "simulation_time": 58.648,
+      "wall_time": 1790112931.4245048
+    }
+  ],
+  "visible_marker_count": 82,
+  "battery_injected": true,
+  "passed": true,
+  "mission_id": "77b10ea3f14941cc9660bbb4d9f4552e",
+  "sample_count": 848,
+  "final_state": {
+    "sim_time": 58.928,
+    "position_enu": [
+      0.016380948945879936,
+      0.029178250581026077,
+      0.0004224366566631943
+    ],
+    "armed": false,
+    "landed": true,
+    "offboard": true,
+    "connected": true,
+    "battery_percent": 95.28922438621521
+  },
+  "minimum_battery_percent": 23.28922301530838,
+  "inspection": {
+    "observation_count": 1,
+    "unique_plants": 1,
+    "classification_counts": {
+      "healthy": 1
+    }
+  },
+  "docking_updates": {
+    "total": 180,
+    "visual_marker": 151
+  },
+  "runtime": "Isaac 6.0.0-rc.59+release.41464.5f2772bc.gl / Pegasus PR144 pinned + tracked attitude patch / PX4 1.14.3",
+  "raw_evidence": "logs/precision-low-battery-evidence.json",
+  "summary_path": "logs/inspection/77b10ea3f14941cc9660bbb4d9f4552e/summary.json"
+}

@@ -1,0 +1,34 @@
+{
+  "target": "gateway",
+  "pid": 120733,
+  "passed": true,
+  "injection": {
+    "elapsed": 39.840913240999726,
+    "position_enu": [
+      0.009535351768136024,
+      -0.008759715594351292,
+      1.5033559799194336
+    ]
+  },
+  "land_after_seconds": 40.99172438400092,
+  "final_position_enu": [
+    0.0037394212558865547,
+    -0.011221857741475105,
+    0.004821540787816048
+  ],
+  "final_state": {
+    "armed": false,
+    "landed": true,
+    "nav_state": 14,
+    "failsafe": false,
+    "position_enu": [
+      0.0037394212558865547,
+      -0.011221857741475105,
+      0.004821540787816048
+    ],
+    "wall_elapsed": 80.83263762500064
+  },
+  "horizontal_displacement_m": 0.006297217993325931,
+  "sample_count": 367,
+  "raw_evidence": "logs/gateway-crash-evidence.json"
+}

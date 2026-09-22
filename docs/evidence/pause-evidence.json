@@ -1,0 +1,35 @@
+{
+  "target": "pause",
+  "pid": 111459,
+  "passed": true,
+  "injection": {
+    "elapsed": 43.313447139000345,
+    "position_enu": [
+      0.023965751752257347,
+      0.0071319034323096275,
+      1.5006521940231323
+    ]
+  },
+  "resumed_at_elapsed": 46.33496937300151,
+  "land_after_seconds": 36.058317429000454,
+  "final_position_enu": [
+    0.007336663547903299,
+    0.01353202760219574,
+    0.017614491283893585
+  ],
+  "final_state": {
+    "armed": false,
+    "landed": true,
+    "nav_state": 18,
+    "failsafe": false,
+    "position_enu": [
+      0.007336663547903299,
+      0.01353202760219574,
+      0.017614491283893585
+    ],
+    "wall_elapsed": 79.3717645680008
+  },
+  "horizontal_displacement_m": 0.017818197549083,
+  "sample_count": 341,
+  "raw_evidence": "logs/pause-evidence.json"
+}

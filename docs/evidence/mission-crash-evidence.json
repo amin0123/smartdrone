@@ -1,0 +1,35 @@
+{
+  "target": "mission",
+  "pid": 111733,
+  "passed": true,
+  "injection": {
+    "elapsed": 37.87776129800113,
+    "position_enu": [
+      0.029139528051018715,
+      -0.013555459678173065,
+      1.5039958953857422
+    ]
+  },
+  "land_after_seconds": 36.83492507200026,
+  "final_position_enu": [
+    -0.004659987986087799,
+    -0.0057522752322256565,
+    0.0018863780423998833
+  ],
+  "horizontal_displacement_m": 0.03468857119917302,
+  "sample_count": 339,
+  "raw_evidence": "logs/mission-crash-evidence.json",
+  "last_periodic_sample": {
+    "wall_elapsed": 74.52661831200021,
+    "position_enu": [
+      -0.0047039855271577835,
+      -0.005893212743103504,
+      0.0019975171890109777
+    ],
+    "armed": true,
+    "landed": true,
+    "nav_state": 18,
+    "failsafe": false
+  },
+  "termination_contract": "Passed only after native AUTO_LAND was observed and fresh landed/disarmed state arrived; periodic sample precedes this final observation."
+}
