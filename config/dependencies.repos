@@ -3,10 +3,16 @@ repositories:
     type: git
     url: https://github.com/PegasusSimulator/PegasusSimulator.git
     version: 644da37e9d5268e5f9a34e78bdcfd57a8bab82b4
+  PegasusSimulator6:
+    type: git
+    url: https://github.com/iftahnaf/PegasusSimulator.git
+    version: fcb99c061460c0000144e526e6384a49291b6e77
+    experimental: true
   PX4-Autopilot:
     type: git
     url: https://github.com/PX4/PX4-Autopilot.git
     version: 1dacb4cdef2d7145754fc788fa8dc482eed74b40
+    tag: v1.14.3
   Micro-XRCE-DDS-Agent:
     type: git
     url: https://github.com/eProsima/Micro-XRCE-DDS-Agent.git

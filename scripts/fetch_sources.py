@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fetch immutable dependency sources; never reset an existing checkout."""
 from pathlib import Path
+import argparse
 import subprocess
 import yaml
 
@@ -12,8 +13,13 @@ def run(*args: str, cwd: Path | None = None) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--experimental-isaac6', action='store_true')
+    args = parser.parse_args()
     spec = yaml.safe_load((ROOT / 'config/dependencies.repos').read_text())
     for name, item in spec['repositories'].items():
+        if item.get('experimental') and not args.experimental_isaac6:
+            continue
         base = ROOT / ('ros2_ws/src' if name == 'px4_msgs' else 'vendor')
         base.mkdir(parents=True, exist_ok=True)
         path = base / name

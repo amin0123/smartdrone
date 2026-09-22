@@ -2,10 +2,12 @@
 """Run the physical Pegasus aircraft. No ROS code controls rotor forces."""
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import time
+import traceback
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
@@ -25,11 +27,14 @@ app = SimulationApp({'headless': args.headless, 'width': 1280, 'height': 720,
 import numpy as np
 import yaml
 import omni.timeline
-from isaacsim.core.api import World
-from isaacsim.core.utils.extensions import enable_extension
-from isaacsim.core.utils.viewports import set_camera_view
-
-enable_extension('omni.isaac.dynamic_control')
+PROFILE = int(os.environ.get('DRONE_SIM_PROFILE', '5'))
+if PROFILE == 6:
+    from isaacsim.core.experimental.utils.app import enable_extension
+else:
+    from isaacsim.core.api import World
+    from isaacsim.core.utils.extensions import enable_extension
+    from isaacsim.core.utils.viewports import set_camera_view
+    enable_extension('omni.isaac.dynamic_control')
 enable_extension('isaacsim.replicator.agent.core')
 enable_extension('isaacsim.ros2.bridge')
 app.update()
@@ -41,20 +46,26 @@ from pegasus.simulator.params import ROBOTS
 
 sys.path.insert(0, str(ROOT / 'isaac_sim'))
 from environments.field import create_field
+from px4_backend import BoundedPX4Backend
 
 
 def main() -> None:
     settings = yaml.safe_load(args.world.read_text())
     pg = PegasusInterface()
-    world = World(physics_dt=settings['physics_dt'], rendering_dt=1 / 60,
-                  stage_units_in_meters=1., device='cpu')
+    if PROFILE == 6:
+        from runtime6 import World6
+        world = World6(app, settings['physics_dt'])
+    else:
+        world = World(physics_dt=settings['physics_dt'], rendering_dt=1 / 60,
+                      stage_units_in_meters=1., device='cpu')
     # Pegasus exposes world read-only; its documented standalone example assigns
     # this backing member. Keep this upstream-version-specific use here only.
-    pg._world = world
+    if PROFILE == 5:
+        pg._world = world
     labels = create_field(world, settings)
     (ROOT / 'logs/scene_labels.json').write_text(json.dumps(labels, indent=2))
     cfg = MultirotorConfig()
-    cfg.backends = [] if args.no_px4 else [PX4MavlinkBackend(PX4MavlinkBackendConfig({
+    cfg.backends = [] if args.no_px4 else [BoundedPX4Backend(PX4MavlinkBackendConfig({
         'vehicle_id': 0, 'px4_autolaunch': False, 'enable_lockstep': True,
         'connection_ip': '127.0.0.1', 'px4_dir': str(ROOT / 'vendor/PX4-Autopilot'),
         'update_rate': 1 / settings['physics_dt'],
@@ -63,10 +74,15 @@ def main() -> None:
     vehicle = Multirotor('/World/quadrotor', ROBOTS['Iris'], 0,
         [dock[0], dock[1], dock[2] + settings['spawn_height']],
         [0., 0., 0., 1.], config=cfg)
-    set_camera_view(eye=np.array([16., -18., 14.]), target=np.array([5., 0., 0.]))
-    from sensors.ros_camera import RosCamera
-    sensors = RosCamera(world, settings['camera'], enabled=args.cameras)
-    process, log = None, None
+    if PROFILE == 5:
+        set_camera_view(eye=np.array([16., -18., 14.]), target=np.array([5., 0., 0.]))
+        from sensors.ros_camera import RosCamera
+        sensors = RosCamera(world, settings['camera'], enabled=args.cameras)
+    else:
+        pg.set_viewport_camera([16., -18., 14.], [5., 0., 0.])
+        from sensors.ros_camera6 import RosCamera6
+        sensors = RosCamera6(world, settings['camera'], enabled=args.cameras)
+    process, log, exit_code = None, None, 0
     timeline = omni.timeline.get_timeline_interface()
     try:
         world.reset()
@@ -74,7 +90,8 @@ def main() -> None:
             sensors.initialize()
         if not args.no_px4 and not args.external_px4:
             log = (ROOT / 'logs/px4-runtime.log').open('w')
-            process = subprocess.Popen(['bash', str(ROOT / 'scripts/run_px4.sh'), '-d'],
+            process = subprocess.Popen([sys.executable, str(ROOT / 'scripts/owned_process.py'),
+                                       str(os.getpid()), 'bash', str(ROOT / 'scripts/run_px4.sh'), '-d'],
                                        stdout=log, stderr=subprocess.STDOUT)
         timeline.play()
         print('DRONE_SIM_READY: physical Iris and agricultural field spawned', flush=True)
@@ -87,6 +104,9 @@ def main() -> None:
                 raise RuntimeError(f'PX4 exited with {process.returncode}; see logs/px4-runtime.log')
             render = steps % settings['render_every'] == 0
             world.step(render=render)
+            for backend in cfg.backends:
+                if backend.link_fault:
+                    raise RuntimeError(backend.link_fault)
             if sensors:
                 sensors.step(world.current_time, render)
             steps += 1
@@ -97,6 +117,9 @@ def main() -> None:
         position = vehicle.state.position.tolist()
         print('DRONE_SIM_FINISHED ' + json.dumps({'steps': steps, 'simulation_seconds': world.current_time,
               'position_enu': position}), flush=True)
+    except Exception:
+        exit_code = 1
+        traceback.print_exc()
     finally:
         timeline.stop()
         if sensors:
@@ -110,7 +133,17 @@ def main() -> None:
                 process.wait()
         if log:
             log.close()
-        app.close()
+        # Fast Kit shutdown can exit the process here. Preserve diagnostics and
+        # a nonzero status instead of silently swallowing the exception above.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        if PROFILE == 6:
+            app.close(exit_code=exit_code)
+        elif exit_code:
+            # Isaac 5.1's close() has no exit-code argument and may exit with 0.
+            os._exit(exit_code)
+        else:
+            app.close()
 
 
 if __name__ == '__main__':

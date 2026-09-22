@@ -49,6 +49,15 @@ diagnostic-msgs==5.3.8
 distlib==0.4.3
 docutils==0.23
 domain-coordinator==0.12.1
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_bringup&subdirectory=ros2_ws/build/drone_bringup
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_core&subdirectory=ros2_ws/build/drone_core
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_docking&subdirectory=ros2_ws/build/drone_docking
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_inspection&subdirectory=ros2_ws/build/drone_inspection
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_mission_manager&subdirectory=ros2_ws/build/drone_mission_manager
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_navigation&subdirectory=ros2_ws/build/drone_navigation
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_perception&subdirectory=ros2_ws/build/drone_perception
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_px4_interface&subdirectory=ros2_ws/build/drone_px4_interface
+-e git+ssh://git@github.com/amin0123/smartdrone.git@90ce5a0dd04d512e90d9053680c3b1f5ffe00288#egg=drone_safety&subdirectory=ros2_ws/build/drone_safety
 empy==3.3.4
 example-interfaces==0.12.1
 examples-rclpy-executors==0.19.7
@@ -101,6 +110,7 @@ pytest-repeat==0.9.4
 pytest-rerunfailures==16.7
 python-dateutil==2.9.0.post0
 python-qt-binding==2.2.2
+pyulog==0.9.0
 PyYAML==6.0.2
 qt-dotgraph==2.7.6
 qt-gui==2.7.6

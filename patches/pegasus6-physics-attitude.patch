@@ -1,0 +1,28 @@
+diff --git a/extensions/pegasus.simulator/pegasus/simulator/logic/vehicles/vehicle.py b/extensions/pegasus.simulator/pegasus/simulator/logic/vehicles/vehicle.py
+index e112e0d..f37a4d8 100644
+--- a/extensions/pegasus.simulator/pegasus/simulator/logic/vehicles/vehicle.py
++++ b/extensions/pegasus.simulator/pegasus/simulator/logic/vehicles/vehicle.py
+@@ -319,11 +319,7 @@ class Vehicle:
+         pos = positions.numpy()[0]        # [x, y, z]
+         quat_wxyz = orientations.numpy()[0]  # [qw, qx, qy, qz]
+ 
+-        # Get the attitude via the USD rotation (more accurate for orientation)
+-        prim = self._current_stage.GetPrimAtPath(self._stage_prefix + "/body")
+-        rotation_quat = get_world_transform_xform(prim).GetQuaternion()
+-        rotation_quat_real = rotation_quat.GetReal()
+-        rotation_quat_img = rotation_quat.GetImaginary()
++        # Use the physics rotation sampled with position; USD can lag rendering.
+ 
+         # Get the linear and angular velocities
+         # get_velocities() returns (linear wp.array Nx3, angular wp.array Nx3) both in world frame
+@@ -343,9 +339,7 @@ class Vehicle:
+         self._state.position = np.array(pos)
+ 
+         # Get the quaternion in the [qx, qy, qz, qw] standard
+-        self._state.attitude = np.array(
+-            [rotation_quat_img[0], rotation_quat_img[1], rotation_quat_img[2], rotation_quat_real]
+-        )
++        self._state.attitude = quat_wxyz[[1, 2, 3, 0]].astype(np.float64)
+ 
+         # Express the velocity of the vehicle in the inertial frame X_dot = [x_dot, y_dot, z_dot]
+         self._state.linear_velocity = np.array(linear_vel)
